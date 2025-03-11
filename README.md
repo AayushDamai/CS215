@@ -1,3 +1,3 @@
 # CS215
-# Setup
+## Setup
 In order to run this code, you need to install graphviz, and networkx on your computer
