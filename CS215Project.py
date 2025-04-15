@@ -1,110 +1,165 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import random
-import time
-import psutil
+from collections import deque
 
-try:
-    from networkx.drawing.nx_agraph import graphviz_layout
-except ImportError:
-    raise ImportError("You need to install pygraphviz or pydot for tree layout support.")
-
-# Create city graph
+# --- Graph Setup ---
 city = nx.DiGraph()
-
-# Label the nodes
 nodes = {
     "A": "Intersection 1", "B": "Intersection 2", "C": "Intersection 3",
     "D": "Intersection 4", "E": "Intersection 5", "F": "Intersection 6"
 }
-
 for node in nodes:
     city.add_node(node, label=nodes[node])
 
-# Define the edges of the network
 edges = [
-    ("A", "B", {"distance": 5, "speed_limit": 50, "traffic": 1.0}),
-    ("A", "C", {"distance": 4, "speed_limit": 50, "traffic": 1.2}),
-    ("B", "D", {"distance": 7, "speed_limit": 50, "traffic": 1.5}),
-    ("C", "E", {"distance": 6, "speed_limit": 50, "traffic": 2.0}),
-    ("D", "F", {"distance": 8, "speed_limit": 50, "traffic": 1.0}),
-    ("E", "F", {"distance": 5, "speed_limit": 50, "traffic": 1.3}),
+    ("A", "B"), ("A", "C"), ("B", "D"),
+    ("C", "E"), ("D", "F"), ("E", "F")
 ]
 
-city.add_edges_from([(u, v, attr) for u, v, attr in edges])
+# Randomize edge attributes
+for u, v in edges:
+    city.add_edge(u, v, 
+                  distance=random.randint(3, 10),
+                  speed_limit=random.randint(30, 70),
+                  traffic=round(random.uniform(1.0, 3.0), 2))
 
-# Calculate travel time
+# --- Utility Functions ---
 def calculate_travel_time(distance, speed_limit, traffic):
     return (distance / speed_limit) * 50 * traffic
 
-# Update traffic conditions
-def update_traffic():
-    for u, v in city.edges:
-        city[u][v]['traffic'] = round(random.uniform(1.0, 3.0), 2)
-
-# Implement BFS
-def bfs_traversal(graph, start_node):
-    visited = set()
-    queue = [start_node]
-    traversal_order = []
-    explored_edges = []
-
+def bfs(graph, start):
+    visited, queue, order, edges = set(), [start], [], []
     while queue:
         node = queue.pop(0)
         if node not in visited:
             visited.add(node)
-            traversal_order.append(node)
+            order.append(node)
             for neighbor in graph.neighbors(node):
                 if neighbor not in visited:
                     queue.append(neighbor)
-                    explored_edges.append((node, neighbor))  # Store explored edge
-    
-    return traversal_order, explored_edges
+                    edges.append((node, neighbor))
+    return order, edges
 
-# Metrics
-start_time = time.time()
-memory_before = psutil.Process().memory_info().rss / (1024 * 1024)  # In MB
+def extract_bfs_path(start, goal, edges):
+    parent_map = {v: u for u, v in edges}
+    path, current = [goal], goal
+    while current != start:
+        if current not in parent_map:
+            return None
+        current = parent_map[current]
+        path.append(current)
+    return list(reversed(path))
 
-# Start BFS
-start_node = "A"
-bfs_result, bfs_edges = bfs_traversal(city, start_node)
+def total_travel_time(graph, path):
+    return sum(
+        calculate_travel_time(graph[u][v]['distance'], graph[u][v]['speed_limit'], graph[u][v]['traffic'])
+        for u, v in zip(path[:-1], path[1:])
+    ) if path and len(path) > 1 else float('inf')
 
-# Metrics
-execution_time = time.time() - start_time
-memory_after = psutil.Process().memory_info().rss / (1024 * 1024)  # In MB
-memory_usage = memory_after - memory_before
+def tabu_search(graph, start, goal, max_iterations=100, tabu_size=5):
+    def travel_time(path):
+        return total_travel_time(graph, path)
+    def get_neighbors(path):
+        return [path + [nbr] for nbr in graph.neighbors(path[-1]) if nbr not in path]
 
-# Display the network
-pos = graphviz_layout(city, prog = "dot")
-fig, ax = plt.subplots(figsize = (8, 6))
-ax.set_title("BFS Traversal Visualization with Travel Times")
+    current_solution = [start]
+    best_solution, best_cost = None, float("inf")
+    tabu_list = deque(maxlen=tabu_size)
+    tabu_history = []
 
-# Draw graph with all nodes in blue
-nx.draw(city, pos, with_labels = True, labels = nodes, node_color = 'lightblue',
-        edge_color = 'gray', node_size = 3000, font_size = 10, arrows = True, ax = ax)
+    for _ in range(max_iterations):
+        neighbors = [n for n in get_neighbors(current_solution) if n not in tabu_list]
+        if not neighbors:
+            break
+        neighbors.sort(key=travel_time)
+        current_solution = neighbors[0]
+        tabu_list.append(list(current_solution))
+        tabu_history.append(list(current_solution))
+        current_cost = travel_time(current_solution)
+        if current_solution[-1] == goal and current_cost < best_cost:
+            best_solution, best_cost = list(current_solution), current_cost
 
-# Draw edge labels (travel times)
-edge_labels = {(u, v): f"{calculate_travel_time(attr['distance'], attr['speed_limit'], attr['traffic']):.1f} min"
-               for u, v, attr in city.edges(data = True)}
-nx.draw_networkx_edge_labels(city, pos, edge_labels = edge_labels, ax = ax, font_size = 9)
+    return best_solution, best_cost, tabu_history
 
-# Animate BFS step by step
-for i, (node, edge) in enumerate(zip(bfs_result, bfs_edges)):
-    plt.pause(0.5)
-    nx.draw_networkx_nodes(city, pos, nodelist = [node], node_color = 'red', node_size = 3000, ax = ax)
-    nx.draw_networkx_edges(city, pos, edgelist = [edge], edge_color = 'red', width = 2.5, ax = ax)
-    plt.draw()
+# --- Main Execution ---
+bfs_order, bfs_edges = bfs(city, "A")
+bfs_path = extract_bfs_path("A", "F", bfs_edges)
+bfs_time = total_travel_time(city, bfs_path)
+tabu_path, tabu_time, tabu_list_log = tabu_search(city, "A", "F")
 
-# Show final graph
+# --- Visualization ---
+pos = nx.spring_layout(city, seed=42)
+edge_colors = ['red' if a['traffic'] >= 2.0 else 'orange' if a['traffic'] >= 1.5 else 'yellow'
+               for _, _, a in city.edges(data=True)]
+
+edge_labels = {}
+for u, v, attr in city.edges(data=True):
+    base = (attr['distance'] / attr['speed_limit']) * 50
+    total = calculate_travel_time(attr['distance'], attr['speed_limit'], attr['traffic'])
+    edge_labels[(u, v)] = (
+        f"Time: {total:.1f} min\n"
+        f"Speed: {attr['speed_limit']} mph\n"
+        f"Traffic: (+{total - base:.1f} min)"
+    )
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8), facecolor='white')
+fig.suptitle("City Network Comparison: Breadth First Search vs Tabu Search", fontsize=18, fontweight='bold')
+
+for ax, path, color, label in [(ax1, bfs_path, 'dodgerblue', "Breadth First Search Path (Blue)"),
+                               (ax2, tabu_path, 'forestgreen', "Tabu Search Path (Green Dashed)")]:
+    nx.draw(city, pos, ax=ax, with_labels=True, labels=nodes, node_color='lightsteelblue',
+            node_size=2000, font_size=10, edge_color=edge_colors, width=2, arrows=True)
+
+    if path:
+        edge_list = list(zip(path, path[1:]))
+        style = 'solid' if color == 'dodgerblue' else 'dashed'
+        nx.draw_networkx_edges(city, pos, edgelist=edge_list, edge_color=color, style=style,
+                               width=4, ax=ax, arrows=True, connectionstyle="arc3,rad=0.05",
+                               min_source_margin=12, min_target_margin=12)
+        nx.draw_networkx_nodes(city, pos, nodelist=path, node_color=color, ax=ax)
+        ax.text(pos[path[0]][0], pos[path[0]][1] - 0.12, "Start", ha='center', fontsize=9)
+        ax.text(pos[path[-1]][0], pos[path[-1]][1] + 0.12, "End", ha='center', fontsize=9)
+
+    for (u, v), label_text in edge_labels.items():
+        x, y = (pos[u][0]+pos[v][0])/2, (pos[u][1]+pos[v][1])/2
+        ax.text(x, y, label_text, fontsize=8, ha='center', va='center',
+                bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+
+    ax.set_title(label, fontsize=14)
+    ax.axis('off')
+
+# Tabu list beside the Tabu Search graph
+if tabu_list_log:
+    tabu_str = "\n".join(" → ".join(p) for p in tabu_list_log[-6:])
+    ax2.text(1.05, 0.5, "Recent Tabu List:\n" + tabu_str, transform=ax2.transAxes,
+             fontsize=9, verticalalignment='center', bbox=dict(facecolor='white', alpha=0.9))
+
+plt.tight_layout(rect=[0, 0.03, 1, 0.93])
 plt.show()
 
-# Output BFS traversal order
-print("\n=== BFS Traversal Order ===")
-print(" -> ".join(bfs_result))
+# --- Console Output ---
+print("=== Path Comparison ===")
+if bfs_path:
+    print("BFS Path:   " + " -> ".join(bfs_path))
+    print("BFS Time:   {:.2f} mins".format(bfs_time))
+else:
+    print("BFS Path:   No path to F")
 
-# Output performance metrics
-print("\n=== Performance Metrics ===")
-print(f"Runtime: {execution_time:.6f} seconds")
-print(f"Memory Usage: {memory_usage:.3f} MB")
-print(f"Solution Quality: ???")
-print(f"Convergence Rate: ???")
+if tabu_path:
+    print("Tabu Path:  " + " -> ".join(tabu_path))
+    print("Tabu Time:  {:.2f} mins".format(tabu_time))
+else:
+    print("Tabu Path:  No valid path to F")
+
+if bfs_time != float('inf') and tabu_time != float('inf'):
+    time_diff = tabu_time - bfs_time
+    if abs(time_diff) < 1e-6:
+        print("Tabu Search and BFS resulted in the same time: {:.2f} mins".format(bfs_time))
+    else:
+        percentage_diff = abs(time_diff) / bfs_time * 100
+        print("Tabu Search was {:.2f}% or {:.2f} minutes {} than BFS.".format(
+            percentage_diff,
+            abs(time_diff),
+            "faster" if time_diff < 0 else "slower"
+        ))
