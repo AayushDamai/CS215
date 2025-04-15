@@ -7,7 +7,7 @@ https://www.python.org/downloads/release/python-3130/
 
 
 
-Install NetworkX from their website (https://networkx.org/) or pip install it:
+Install NetworkX from the website (https://pypi.org/project/networkx/) or pip install it:
 
 ```bash
 pip install networkx
