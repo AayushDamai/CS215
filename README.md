@@ -42,4 +42,12 @@ Install Matplotlib:
 pip install matplotlib
 ```
 
+
+
+Install Psutil:
+
+```bash
+pip install psutil
+```
+
 Program is now ready to run!
