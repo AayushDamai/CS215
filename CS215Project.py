@@ -146,7 +146,8 @@ plt.show()
 
 #  Console Output
 print()
-print("    **Path Comparison**    ") 
+print("    **Path Comparison**    ")
+print()
 outputFile = r'C:\Users\rahso\OneDrive\Documents\CS 215 Project\output.csv'
 
 # Store runtimes
