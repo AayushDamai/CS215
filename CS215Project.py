@@ -106,14 +106,14 @@ for u, v, attr in city.edges(data=True):
     )
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (18, 8), facecolor='white')
-fig.suptitle("City Network Comparison: Breadth First Search (BFS) vs Tabu Search", fontsize = 18, fontweight = 'bold')
+fig.suptitle("City Network Comparison: Breadth First Search (BFS) vs Tabu Search (TS)", fontsize = 18, fontweight = 'bold')
 y_pos = 0.91
 fig.text(0.30, y_pos, "High Traffic", color = 'red', fontsize = 10, weight = 'bold')
 fig.text(0.45, y_pos, "Medium Traffic", color = 'orange', fontsize = 11, weight = 'bold')
 fig.text(0.60, y_pos, "Low Traffic", color = 'gold', fontsize = 11, weight = 'bold')
 
 for ax, path, color, label in [(ax1, bfs_path, 'dodgerblue', "BFS Path (Blue Line)"),
-                               (ax2, tabu_path, 'forestgreen', "Tabu Search Path (Green Dashed Line)")]:
+                               (ax2, tabu_path, 'forestgreen', "TS Path (Green Dashed Line)")]:
     nx.draw(city, pos, ax = ax, with_labels = True, labels = nodes, node_color = 'lightsteelblue',
             node_size = 2000, font_size = 10, edge_color = edge_colors, width = 2, arrows = True)
 
