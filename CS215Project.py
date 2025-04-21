@@ -59,7 +59,7 @@ def total_travel_time(graph, path):
         for u, v in zip(path[:-1], path[1:])
     ) if path and len(path) > 1 else float('inf')
 
-def tabu_search(graph, start, goal, max_iterations=100, tabu_size=5):
+def tabu_search(graph, start, goal, max_iterations = 100, tabu_size = 5):
     def travel_time(path):
         return total_travel_time(graph, path)
     def get_neighbors(path):
@@ -96,7 +96,7 @@ edge_colors = ['red' if a['traffic'] >= 2.0 else 'orange' if a['traffic'] >= 1.5
                for _, _, a in city.edges(data = True)]
 
 edge_labels = {}
-for u, v, attr in city.edges(data=True):
+for u, v, attr in city.edges(data = True):
     base = (attr['distance'] / attr['speed_limit']) * 50
     total = calculate_travel_time(attr['distance'], attr['speed_limit'], attr['traffic'])
     edge_labels[(u, v)] = (
