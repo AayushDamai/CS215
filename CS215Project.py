@@ -145,9 +145,7 @@ plt.tight_layout(rect = [0, 0.03, 1, 0.93])
 plt.show()
 
 #  Console Output
-print()
-print("    **Path Comparison**    ")
-print()
+print("\n    **Path Comparison**    \n")
 outputFile = r'C:\Users\rahso\OneDrive\Documents\CS 215 Project\output.csv'
 
 # Store runtimes
