@@ -146,7 +146,7 @@ plt.show()
 
 #  Console Output
 print("\n    **Path Comparison**    \n")
-outputFile = r'C:\Users\rahso\OneDrive\Documents\CS 215 Project\output.csv'
+outputFile = r'output.csv'
 
 # Store runtimes
 bfs_times = []
