@@ -24,7 +24,7 @@ nodes = {
     "AN": "Intersection 40", "AO": "Intersection 41", "AP": "Intersection 42",
     "AQ": "Intersection 43", "AR": "Intersection 44", "AS": "Intersection 45",
     "AT": "Intersection 46", "AU": "Intersection 47", "AV": "Intersection 48",
-    "AW": "Intersection 49", "AX": "Intersection 50", "AY": "Intersection 51",
+    "AW": "Intersection 49", "AX": "Intersection 50", "AY": "Intersection 51"
 }
 
 for node in nodes:
@@ -73,7 +73,7 @@ edges = [
     ("CV", "CW"), ("CW", "CX"), ("CX", "CY"),
     ("CY", "CZ"), ("CZ", "DA"), ("DA", "DB"),
     ("DB", "DC"), ("DC", "DD"), ("DD", "DE"),
-    ("DE", "DF"), ("DF", "DG"), ("DG", "DH"),
+    ("DE", "DF"), ("DF", "DG"), ("DG", "DH")
 ]
 
 # Randomization for edges
