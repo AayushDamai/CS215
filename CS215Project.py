@@ -11,6 +11,7 @@ nodes = {
     "A": "Intersection 1", "B": "Intersection 2", "C": "Intersection 3",
     "D": "Intersection 4", "E": "Intersection 5", "F": "Intersection 6"
 }
+
 for node in nodes:
     city.add_node(node, label = nodes[node])
 
